@@ -27,18 +27,18 @@ typedef long long FEATURE;
 //#define NOTOP       // annotate this line if train a model could predict the root of a graph
 
 /* FILE PATHS */
-#define TRAIN_DATA "/Users/wangfang/Documents/data/train/dm.sdp"
-#define TEST_DATA "/Users/wangfang/Documents/data/test/dm.test.sdp"
-#define RESULT_FILE "/Users/wangfang/Documents/data/checkpoint/result.ep.20"
-#define CHECKP_PATH "/Users/wangfang/Documents/data/checkpoint/"
+#define TRAIN_DATA "/path/to/training/data"
+#define TEST_DATA "/path/to/test/data"
+#define RESULT_FILE "/path/to/save/parsing/result"
+#define CHECKP_PATH "/directory/to/save/perceptron/after/each/training/epoch/"
 
-#define FEATURE_DICT_PATH "/Users/wangfang/Documents/data/dict/feature.dict"
-#define TRANSITION_DICT_PATH "/Users/wangfang/Documents/data/dict/transition.dict"
-#define WORD_DICT_PATH "/Users/wangfang/Documents/data/dict/word.dict"
-#define LEMMA_DICT_PATH "/Users/wangfang/Documents/data/dict/lemma.dict"
-#define POS_DICT_PATH "/Users/wangfang/Documents/data/dict/pos.dict"
-#define LABEL_DICT_PATH "/Users/wangfang/Documents/data/dict/label.dict"
-#define SAVED_ALPHA "/Users/wangfang/Documents/data/checkpoint/alpha.epoch.20"
+#define FEATURE_DICT_PATH "/path/to/save/feature/dict"
+#define TRANSITION_DICT_PATH "/path/to/save/transition/dict"
+#define WORD_DICT_PATH "/path/to/save/word/dict"
+#define LEMMA_DICT_PATH "/path/to/save/lemma/dict"
+#define POS_DICT_PATH "/path/to/save/pos/dict"
+#define LABEL_DICT_PATH "/path/to/save/label/dict"
+#define SAVED_ALPHA "/path/to/saved/perceptron/when/conducting/MODE-0"
 //#define LOG_PATH "/path/to/log/file"
 
 /* PARAMETER SETTING */

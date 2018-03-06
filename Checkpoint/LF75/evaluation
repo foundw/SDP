@@ -1,0 +1,88 @@
+# Evaluation
+
+Gold standard file: test/dm.test.sdp
+System output file: ./checkpoint/result.avg.ep.10
+
+## Scores excluding virtual dependencies to top nodes
+
+Number of edges in gold standard: 23406
+Number of edges in system output: 23276
+Number of edges in common, labeled: 17579
+Number of edges in common, unlabeled: 18262
+
+### Labeled scores
+
+LP: 75.52
+LR: 75.10
+LF: 75.31
+LM: 8.23
+
+### Breakdown by label type
+
+               Label      #Gold    #System   #Correct   Precison     Recall         F1
+                ARG1       9198       9415       6644      70.57      72.23      71.39
+                ARG2       5686       5793       4244      73.26      74.64      73.94
+                ARG3        323        229         87      37.99      26.93      31.52
+                ARG4          7          5          0       0.00       0.00        NaN
+                  BV       2569       2616       2431      92.93      94.63      93.77
+                 TOP          0         39          0       0.00        NaN        NaN
+          _and+not_c          0          1          0       0.00        NaN        NaN
+           _and+so_c          0          1          0       0.00        NaN        NaN
+         _and+then_c          3          1          0       0.00       0.00        NaN
+              _and_c        524        480        262      54.58      50.00      52.19
+       _as+well+as_c          4          1          0       0.00       0.00        NaN
+         _but+also_c          1          1          0       0.00       0.00        NaN
+          _but+not_c          2          1          0       0.00       0.00        NaN
+              _but_c         55         16          5      31.25       9.09      14.08
+           _except_c          0          1          0       0.00        NaN        NaN
+            _minus_c          1          0          0        NaN       0.00        NaN
+              _nor_c          0          2          0       0.00        NaN        NaN
+              _not_c          3          1          0       0.00       0.00        NaN
+               _or_c         96         71         57      80.28      59.38      68.26
+             _plus_c          2          0          0        NaN       0.00        NaN
+      _rather+than_c          2          1          0       0.00       0.00        NaN
+             _then_c          9          0          0        NaN       0.00        NaN
+           _though_c          1          0          0        NaN       0.00        NaN
+           _versus_c          1          0          0        NaN       0.00        NaN
+              _yet_c          0          3          0       0.00        NaN        NaN
+               appos        232        199        135      67.84      58.19      62.65
+                comp         17         20         17      85.00     100.00      91.89
+         comp_enough          1          0          0        NaN       0.00        NaN
+           comp_less          3          1          1     100.00      33.33      50.00
+         comp_not+so          1          0          0        NaN       0.00        NaN
+             comp_so         18         18         15      83.33      83.33      83.33
+            comp_too         12          5          5     100.00      41.67      58.82
+            compound       2750       2738       2455      89.66      89.27      89.47
+                conj        124         97         31      31.96      25.00      28.05
+           discourse          3          0          0        NaN       0.00        NaN
+                 loc        344        231        130      56.28      37.79      45.22
+              manner          5          4          2      50.00      40.00      44.44
+             measure         17         14          6      42.86      35.29      38.71
+                 mwe        206        140        119      85.00      57.77      68.79
+                 neg        162        155        121      78.06      74.69      76.34
+                  of         35         30         29      96.67      82.86      89.23
+       parenthetical          2          7          2      28.57     100.00      44.44
+                part         70         55         35      63.64      50.00      56.00
+                plus          5          5          5     100.00     100.00     100.00
+                poss        574        572        519      90.73      90.42      90.58
+              subord         98         91         23      25.27      23.47      24.34
+                temp          9          3          0       0.00       0.00        NaN
+                than         55         42         29      69.05      52.73      59.79
+               times        176        171        170      99.42      96.59      97.98
+
+### Breakdown by edge length
+
+    Length      #Gold    #System   Precison     Recall
+         1:     10735      10910      85.17      86.56
+         2:      5410       5639      79.43      82.79
+         3:      2768       2862      69.60      71.97
+         4:      1312       1339      58.63      59.83
+       5-9:      2145       1796      45.10      37.76
+       10-:      1036        730      30.27      21.33
+
+### Unlabeled scores
+
+UP: 78.46
+UR: 78.02
+UF: 78.24
+UM: 9.57
