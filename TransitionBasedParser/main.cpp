@@ -44,7 +44,11 @@ void trainModel(){
     
     cout << "NOW TESTING!\n";
     vector<pair<vector<NNode>, string>> t = R.readinTestData();
+#ifdef AVERAGE
+    p.Predict(t, RESULT_FILE, true);
+#else
     p.Predict(t, RESULT_FILE);
+#endif
 }
 
 void predictWithPreTrainedModel(){

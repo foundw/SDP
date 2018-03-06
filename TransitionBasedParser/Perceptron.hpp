@@ -2,6 +2,7 @@
 //  Perceptron.hpp
 //  TransitionBasedSemanticDependencyParser
 //
+//  Created by FoundW on 2017/6/4.
 //  Copyright © 2017 FoundW. All rights reserved.
 //
 
@@ -30,11 +31,11 @@ private:
 public:
     Perceptron();
     void Train(vector<vector<NNode>>& sentlib, vector<NGraph>& glib);
-    void Predict(vector<pair<vector<NNode>, string>>& sents, string res_file); // predict and decode
+    void Predict(vector<pair<vector<NNode>, string>>& sents, string res_file, bool average = false); // predict and decode
     void Graph2File(vector<NNode>& sent, NGraph& predict, ofstream& writer);
     void Graph2FileTest(vector<NGraph> glib, vector<vector<NNode>> train_sent_lib);
-    NGraph GEN(vector<NNode>& sent, int beam);
-    int CalcScore(NGraph& current, int act, vector<int>& configurations);
+    NGraph GEN(vector<NNode>& sent, int beam, bool average = false);
+    SCORE CalcScore(NGraph& current, int act, vector<int>& configurations, bool average = false);
     static bool CmpScore(const pair<int, pair<int, int>>& a, const pair<int, pair<int, int>>& b){
         return a.first > b.first;
     }

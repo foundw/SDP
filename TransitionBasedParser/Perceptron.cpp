@@ -23,12 +23,12 @@ Perceptron::Perceptron(){
     }
 }
 
-NGraph Perceptron::GEN(vector<NNode>& sent, int beam){
+NGraph Perceptron::GEN(vector<NNode>& sent, int beam, bool average){
     int l = (int)sent.size();
     vector<NGraph> candidates;
     candidates.push_back(NGraph(l));
     while(true){
-        vector<pair<int, pair<int, int>>> next;     //{score, {last_turn_id, act_id}}
+        vector<pair<SCORE, pair<int, int>>> next;     //{score, {last_turn_id, act_id}}
         vector<NGraph> new_candidates;
         int ccnt = 0;
         int candi_id = 0;
@@ -56,7 +56,7 @@ NGraph Perceptron::GEN(vector<NNode>& sent, int beam){
             fExtractor.extractFeatures(sent, tmp, configurations);
             
             for(int act = 0; act < x_dimension; act++){
-                int score = CalcScore(tmp, act, configurations);
+                SCORE score = CalcScore(tmp, act, configurations, average);
                 if(ccnt < beam){
                     next.push_back(make_pair(score, make_pair(candi_id, act)));
                 }
@@ -74,8 +74,8 @@ NGraph Perceptron::GEN(vector<NNode>& sent, int beam){
             }
             candi_id++;
         }
-        for(pair<int, pair<int, int>> i : next){
-            if(i.first == INT_MIN){
+        for(pair<SCORE, pair<int, int>> i : next){
+            if(i.first == LLONG_MIN){
                 continue;
             }
             NGraph g = NGraph(candidates[i.second.first], i.second.second, i.first);
@@ -100,15 +100,20 @@ NGraph Perceptron::GEN(vector<NNode>& sent, int beam){
     return candidates[0];
 }
 
-int Perceptron::CalcScore(NGraph& current, int act, vector<int>& configurations){
-    int delta = current.get_score();
+SCORE Perceptron::CalcScore(NGraph& current, int act, vector<int>& configurations, bool average){
+    SCORE delta = current.get_score();
     //int beta_st = current.get_beta();
     int lambda1_ed = current.get_lambda1();
     if(lambda1_ed == -1 && act != SHIFT){
-        return INT_MIN;
+        return LLONG_MIN;
     }
     for(int config : configurations){
-        delta += alpha[act][config];
+        if(average){
+            delta += avg_alpha[act][config];
+        }
+        else{
+            delta += alpha[act][config];
+        }
     }
     return delta;
 }
@@ -232,8 +237,6 @@ void Perceptron::Train(vector<vector<NNode>>& sentlib, vector<NGraph>& glib){
         cout << "Epoch " << epoch << ":\t Exactly Match / Total = " << correct << " / " << length << " = " << correct * 1.0 / length << endl;
         cout << "-- TIME = " << (double)(epoch_finish - epoch_start) / CLOCKS_PER_SEC << " sec. with Current Feature Size = " << fExtractor.feats_size() << endl;
         fExtractor.writeFDict(FEATURE_DICT_PATH);
-        // write alpha to files
-        WriteAlphaToFile(ALPHA_SAVE(epoch));
         
 #ifdef AVERAGE
         for(int i = 0; i < length; i++){
@@ -256,6 +259,9 @@ void Perceptron::Train(vector<vector<NNode>>& sentlib, vector<NGraph>& glib){
                 }
             }
         }
+#else
+        // write alpha to files
+        WriteAlphaToFile(ALPHA_SAVE(epoch));
 #endif
         
     }
@@ -266,7 +272,9 @@ void Perceptron::WriteAlphaToFile(string file_path){
     ofstream out(file_path, ios::out);
     for(int i = 0; i < x_dimension; i++){
         for(int j = 0; j < fExtractor.feats_size(); j++){
-            out << i << "\t" << j << "\t" << alpha[i][j] << endl;
+            if(alpha[i][j] != 0){
+                out << i << "\t" << j << "\t" << alpha[i][j] << endl;
+            }
         }
     }
     out.close();
@@ -276,7 +284,9 @@ void Perceptron::WriteAlphaToFile(string file_path, vector<vector<int>>& a){
     ofstream out(file_path, ios::out);
     for(int i = 0; i < x_dimension; i++){
         for(int j = 0; j < fExtractor.feats_size(); j++){
-            out << i << "\t" << j << "\t" << a[i][j] << endl;
+            if(a[i][j] != 0){
+                out << i << "\t" << j << "\t" << a[i][j] << endl;
+            }
         }
     }
     out.close();
@@ -284,6 +294,9 @@ void Perceptron::WriteAlphaToFile(string file_path, vector<vector<int>>& a){
 
 void Perceptron::ReadAlphaFromFile(string file_path){
     ifstream in(file_path, ios::in);
+    for(int i = 0; i < x_dimension; i++){
+        alpha[i] = vector<int>(y_dimension, 0);
+    }
     int x, y, val;
     while(in >> x >> y >> val){
         alpha[x][y] = val;
@@ -302,21 +315,18 @@ void Perceptron::ReadAvgAlphaFromFile(string file_path){
 }
 #endif
 
-void Perceptron::Predict(vector<pair<vector<NNode>, string>>& sents, string res_file){
-#ifdef AVERAGE
-    if(MODE == 1){
-        for(int i = 0; i < x_dimension; i++){
-            for(int j = 0; j < y_dimension; j++){
-                alpha[i][j] = avg_alpha[i][j];
-            }
-        }
-    }
-#endif
+void Perceptron::Predict(vector<pair<vector<NNode>, string>>& sents, string res_file, bool average){
     ofstream writer(res_file, ios::out);
     
     for(pair<vector<NNode>, string> sent_num : sents){
         vector<NNode> sent = sent_num.first;
-        NGraph predict = GEN(sent, BEAM);
+        NGraph predict;
+        if(MODE == 1){
+            predict = GEN(sent, BEAM, average);
+        }
+        else{
+            predict = GEN(sent, BEAM);
+        }
         // Encode the graph to standard file format
         writer << sent_num.second << endl;
         Graph2File(sent, predict, writer);

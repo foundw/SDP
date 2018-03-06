@@ -76,7 +76,7 @@ private:
     vector<int> ld;
     vector<int> rd;
     vector<vector<pair<int, int>>> hd;
-    int score = 0;
+    SCORE score = 0;
     int lambda1 = 0;
     int beta = 1;
     
@@ -85,7 +85,7 @@ public:
     // Generate golden Graph from structured data read in
     NGraph(int V_);
     // Generate raw Graph
-    NGraph(NGraph& base, int transition, int score_);
+    NGraph(NGraph& base, int transition, SCORE score_);
     // Derive a new graph based on the given one to add one transition
     NGraph();
     int size(){return V;}
@@ -93,7 +93,7 @@ public:
         return g.score < score;
     }
     vector<vector<int>> get_features(){return features;}
-    int get_score(){return score;}
+    SCORE get_score(){return score;}
     vector<int> get_transitions(){return transitions;}
     vector<vector<int>> get_edges(){return edges;}
     int get_edge_label(int from, int to){return edges[from][to];}
@@ -114,6 +114,7 @@ struct Dict{
     unordered_map<KEY_TYPE, int> v2id;
     vector<KEY_TYPE> id2v;
     int size = 0;
+    int old_size = 0;
     int lookup(KEY_TYPE value, bool insert = true){
         if(v2id.find(value) == v2id.end()){
             if(!insert){
@@ -128,39 +129,34 @@ struct Dict{
             return v2id[value];
         }
     }
-    void write2File(string filepath, bool byIdOrder = false){
-        ofstream out(filepath);
-        out << size << endl;
-        if(byIdOrder){
+    void write2File(string filepath, bool incremental = false){
+        if(incremental){
+            ofstream out(filepath,ios::app);
+            for(int i = old_size; i < size; i++){
+                out << i << "\t" << id2v[i] << endl;
+            }
+            old_size = size;
+            out.close();
+        }
+        else{
+            ofstream out(filepath);
+            out << size << endl;
             for(int i = 0; i < size; i++){
                 out << i << "\t" << id2v[i] << endl;
             }
+            out.close();
+        }
+    }
+    void readDictFromFile(string file_path, bool incremental = false){
+        ifstream in(file_path, ios::in);
+        v2id.clear();
+        if(!incremental){
+            in >> size;
+            id2v = vector<KEY_TYPE>(size);
         }
         else{
-            for (pair<KEY_TYPE, int> i : v2id){
-                out << i.first << "\t" << i.second << endl;
-            }
+            id2v = vector<KEY_TYPE>(MAXFEAT);
         }
-        out.close();
-    }
-    void readDictFromFile(string file_path){
-        ifstream in(file_path, ios::in);
-        in >> size;
-        v2id.clear();
-        id2v = vector<KEY_TYPE>(size);
-        int idx;
-        KEY_TYPE key;
-        while(in >> key >> idx){
-            v2id[key] = idx;
-            id2v[idx] = key;
-        }
-        in.close();
-    }
-    void readFDictFromFile(string file_path){
-        ifstream in(file_path, ios::in);
-        in >> size;
-        v2id.clear();
-        id2v = vector<KEY_TYPE>(size);
         int idx;
         KEY_TYPE key;
         while(in >> idx >> key){
@@ -172,11 +168,12 @@ struct Dict{
 };
 
 typedef Dict<int> IntDict;
+typedef Dict<FEATURE> IntLDict;
 typedef Dict<string> StrDict;
 
 class FeatureExtractor{
 private:
-    IntDict fDict = IntDict(); // unigram feature dictionary
+    IntLDict fDict = IntLDict(); // unigram feature dictionary
     //IntDict bifDict = IntDict(); // bigram feature dictionary
     IntDict tDict = IntDict(); // transition dictionary
     
@@ -196,8 +193,8 @@ public:
     int proc_postag(string pos){return pos2int.lookup(pos);}
     int proc_label(string lb){return label2int.lookup(lb);}
     int proc_trans(int trans){return tDict.lookup(trans);}
-    int proc_feat(int fint){return fDict.lookup(fint);}
-    int proc_feat(int fint, bool insert){return fDict.lookup(fint, insert);}
+    int proc_feat(FEATURE fint){return fDict.lookup(fint);}
+    int proc_feat(FEATURE fint, bool insert){return fDict.lookup(fint, insert);}
     
     string get_word(int wid){return word2int.id2v[wid];}
     string get_lemma(int lid){return lemma2int.id2v[lid];}
@@ -207,8 +204,8 @@ public:
     int feats_size(){return fDict.size;}
     int trans_size(){return tDict.size;}
     //int trans_size(){return tDict.size + bifDict.size();}
-    int genFeature_t_5_2(int type, int val1 = VOID, int val2 = VOID, int val3 = VOID);
-    int genBigramFeature(int type, int val1 = VOID, int val2 = VOID, int val3 = VOID);
+    FEATURE genFeature_t_5_2(long long type, long long val1 = VOID, long long val2 = VOID);
+    FEATURE genBigramFeature(long long type, long long lm1 = VOID, long long lm2 = VOID, long long ps1 = VOID, long long ps2 = VOID);
     void extractFeatures(vector<NNode>& nSet, int beta_st, int lambda1_ed, vector<vector<int>>& edges, vector<int> ld, vector<int> rd, vector<vector<pair<int, int>>> hd, vector<int>& features, bool add_new = true);
     void extractFeatures(vector<NNode>& nSet, int beta_st, int lambda1_ed, vector<vector<int>>& edges, vector<int>& features){
         extractFeatures(nSet, beta_st, lambda1_ed, edges, empty_list, empty_list, empty2D_pair_list, features);
@@ -232,7 +229,7 @@ public:
     }
     void loadDicts(){
         tDict.readDictFromFile(TRANSITION_DICT_PATH);
-        fDict.readFDictFromFile(FEATURE_DICT_PATH);
+        fDict.readDictFromFile(FEATURE_DICT_PATH, true);
         word2int.readDictFromFile(WORD_DICT_PATH);
         lemma2int.readDictFromFile(LEMMA_DICT_PATH);
         pos2int.readDictFromFile(POS_DICT_PATH);

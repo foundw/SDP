@@ -99,7 +99,7 @@ NGraph::NGraph(int V_){
     beta = 1;
 }
 
-NGraph::NGraph(NGraph& base, int transition, int score_){
+NGraph::NGraph(NGraph& base, int transition, SCORE score_){
     V = base.size();
     complete = base.isCompleted();
     transitions = base.get_transitions();
@@ -190,27 +190,12 @@ void PrintConfiguration(vector<NNode> sent, NGraph dep){
  * encode feature: F = TYPE-VAL1-VAL2, to calculate:
  *   feature = 10000000 * TYPE + 100 * VAL1 + VAL2
  */
-int FeatureExtractor::genFeature_t_5_2(int type, int val1, int val2, int val3){
-    if(type < 37 || type == 38 || type == 40){
-        return 10000000 * type + 100 * val1 + val2;
-    }
-    if(type == 37){
-        return -100000000 - (10000 * val1 + val2);
-    }
-    if(type == 39){
-        return 10000000 * type + 100 * val2 + val1;
-    }
-    if(type == 42){
-        return -200000000 - (val1 * 10000 + val2 * 100 + val3);
-    }
-    if(type == 43){
-        return -300000000 - (val2 * 10000 + val1 * 100 + val3);
-    }
-    if(type == 44){
-        return 10000000 * type + val1 * 10000 + val2 * 100 + val3;
-    }
-    cout << "IMPOSSIBLE" << endl;
-    return 0;
+FEATURE FeatureExtractor::genFeature_t_5_2(long long type, long long val1, long long val2){
+    return 10000000 * type + 100 * val1 + val2;
+}
+
+FEATURE FeatureExtractor::genBigramFeature(long long type, long long lm1, long long lm2, long long ps1, long long ps2){
+    return type * 100000000000000 + lm1 * VACAB_SIZE_MAX + lm2 + ps1 * PTAG_SIZE_MAX + ps2;
 }
 
 void FeatureExtractor::extractFeatures(vector<NNode>& nSet, int beta_st, int lambda1_ed, vector<vector<int>>& edges, vector<int> ld, vector<int> rd, vector<vector<pair<int, int>>> hd, vector<int>& features, bool add_new){
@@ -221,7 +206,7 @@ void FeatureExtractor::extractFeatures(vector<NNode>& nSet, int beta_st, int lam
     int distance = beta_st - lambda1_ed;
     
     // unigram feature 1
-    int f = genFeature_t_5_2(1, wd_beta);
+    FEATURE f = genFeature_t_5_2(1, wd_beta);
     int fid = proc_feat(f, add_new);
     features.push_back(fid);
     // unigram feature 2
@@ -254,15 +239,15 @@ void FeatureExtractor::extractFeatures(vector<NNode>& nSet, int beta_st, int lam
         }
     }
     // structural feature 1
-    f = genFeature_t_5_2(25, edge_label);
+    f = genFeature_t_5_2(51, edge_label);
     fid = proc_feat(f, add_new);
     features.push_back(fid);
     // structural feature 2
-    f = genFeature_t_5_2(26, lm_beta, edge_label);
+    f = genFeature_t_5_2(52, lm_beta, edge_label);
     fid = proc_feat(f, add_new);
     features.push_back(fid);
     // structural feature 3
-    f = genFeature_t_5_2(27, ps_beta, edge_label);
+    f = genFeature_t_5_2(53, ps_beta, edge_label);
     fid = proc_feat(f, add_new);
     features.push_back(fid);
     
@@ -308,15 +293,15 @@ void FeatureExtractor::extractFeatures(vector<NNode>& nSet, int beta_st, int lam
             }
         }
         // structural feature 4
-        f = genFeature_t_5_2(28, lam1_lc_label);
+        f = genFeature_t_5_2(54, lam1_lc_label);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
         // structural feature 5
-        f = genFeature_t_5_2(29, lm_lam1, lam1_lc_label);
+        f = genFeature_t_5_2(55, lm_lam1, lam1_lc_label);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
         // structural feature 6
-        f = genFeature_t_5_2(30, ps_lam1, lam1_lc_label);
+        f = genFeature_t_5_2(56, ps_lam1, lam1_lc_label);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
         
@@ -339,15 +324,15 @@ void FeatureExtractor::extractFeatures(vector<NNode>& nSet, int beta_st, int lam
             }
         }
         // structural feature 7
-        f = genFeature_t_5_2(31, lam1_rc_label);
+        f = genFeature_t_5_2(57, lam1_rc_label);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
         // structural feature 8
-        f = genFeature_t_5_2(32, lm_lam1, lam1_rc_label);
+        f = genFeature_t_5_2(58, lm_lam1, lam1_rc_label);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
         // structural feature 9
-        f = genFeature_t_5_2(33, ps_lam1, lam1_rc_label);
+        f = genFeature_t_5_2(59, ps_lam1, lam1_rc_label);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
         
@@ -359,7 +344,7 @@ void FeatureExtractor::extractFeatures(vector<NNode>& nSet, int beta_st, int lam
             if(!heads.empty()){
                 nohead = false;
                 for(pair<int, int> head : heads){
-                    f = genFeature_t_5_2(34, nSet[head.first].get_lemma(), head.second);
+                    f = genFeature_t_5_2(60, nSet[head.first].get_lemma(), head.second);
                     fid = proc_feat(f, add_new);
                     features.push_back(fid);
                 }
@@ -369,110 +354,203 @@ void FeatureExtractor::extractFeatures(vector<NNode>& nSet, int beta_st, int lam
             for(int i = 0; i < beta_st; i++){
                 if(edges[i][lambda1_ed] != VOID){
                     nohead = false;
-                    f = genFeature_t_5_2(34, nSet[i].get_lemma(), edges[i][lambda1_ed]);
+                    f = genFeature_t_5_2(60, nSet[i].get_lemma(), edges[i][lambda1_ed]);
                     fid = proc_feat(f, add_new);
                     features.push_back(fid);
                 }
             }
         }
         if(nohead){
-            f = genFeature_t_5_2(34, NONODE, VOID);
+            f = genFeature_t_5_2(60, NONODE, VOID);
             fid = proc_feat(f, add_new);
             features.push_back(fid);
         }
         
         // bi-gram features
-        f = genFeature_t_5_2(37, lm_lam1, lm_beta);
+        f = genBigramFeature(80, lm_lam1, lm_beta);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        f = genFeature_t_5_2(38, lm_lam1, ps_beta);
+        f = genFeature_t_5_2(81, lm_lam1, ps_beta);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        f = genFeature_t_5_2(39, ps_lam1, lm_beta);
+        f = genFeature_t_5_2(82, lm_beta, ps_lam1);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        f = genFeature_t_5_2(40, ps_lam1, ps_beta);
+        f = genFeature_t_5_2(83, ps_lam1, ps_beta);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        //f = genFeature_t_5_2(41, lemma_la, lemma_be, distance);
-        //fid = proc_feat(f, add_new);
-        //features.push_back(fid);
-        f = genFeature_t_5_2(42, lm_lam1, ps_beta, distance);
+        f = genBigramFeature(84, lm_lam1, lm_beta, ps_lam1, ps_beta);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        f = genFeature_t_5_2(43, ps_lam1, lm_beta, distance);
+        f = genBigramFeature(85, lm_lam1, lm_beta, distance);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        f = genFeature_t_5_2(44, ps_lam1, ps_beta, distance);
+        f = genBigramFeature(86, lm_lam1, VOID, ps_beta, distance);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
+        f = genBigramFeature(87, VOID, lm_beta, ps_lam1, distance);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        f = genBigramFeature(88, distance, ps_lam1, ps_beta);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        
+        if(lambda1_ed > 0){
+            int wd_lam1_1 = nSet[lambda1_ed-1].get_form();
+            int lm_lam1_1 = nSet[lambda1_ed-1].get_lemma();
+            int ps_lam1_1 = nSet[lambda1_ed-1].get_POS();
+            // unigram feature 9
+            f = genFeature_t_5_2(9, wd_lam1_1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            // unigram feature 10
+            f = genFeature_t_5_2(10, lm_lam1_1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            // unigram feature 11
+            f = genFeature_t_5_2(11, ps_lam1_1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            // unigram feature 12
+            f = genFeature_t_5_2(12, lm_lam1_1, ps_lam1_1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            
+            // bi-gram features
+            f = genBigramFeature(90, lm_lam1_1, lm_lam1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(91, lm_lam1_1, ps_lam1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(92, lm_lam1, ps_lam1_1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(93, ps_lam1_1, ps_lam1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genBigramFeature(94, lm_lam1_1, lm_lam1, ps_lam1_1, ps_lam1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+        }
     }
     
-    if(lambda1_ed > 0){
-//        int wd_lam1_sec = nSet[lambda1_ed-1].get_form();
-        int lm_lam1_1 = nSet[lambda1_ed-1].get_lemma();
-        int ps_lam1_1 = nSet[lambda1_ed-1].get_POS();
-        // unigram feature 9
-        f = genFeature_t_5_2(9, lm_lam1_1);
-        fid = proc_feat(f, add_new);
-        features.push_back(fid);
-        // unigram feature 10
-        f = genFeature_t_5_2(10, ps_lam1_1);
-        fid = proc_feat(f, add_new);
-        features.push_back(fid);
-        // unigram feature 11
-        f = genFeature_t_5_2(11, lm_lam1_1, ps_lam1_1);
-        fid = proc_feat(f, add_new);
-        features.push_back(fid);
-    }
+    
     
     if(beta_st + 1 < V){
+        int wd_beta_1 = nSet[beta_st+1].get_form();
         int lm_beta_1 = nSet[beta_st+1].get_lemma();
         int ps_beta_1 = nSet[beta_st+1].get_POS();
-        // unigram feature 12
-        f = genFeature_t_5_2(12, lm_beta_1);
-        fid = proc_feat(f, add_new);
-        features.push_back(fid);
         // unigram feature 13
-        f = genFeature_t_5_2(13, ps_beta_1);
+        f = genFeature_t_5_2(13, wd_beta_1);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
         // unigram feature 14
-        f = genFeature_t_5_2(14, lm_beta_1, ps_beta_1);
+        f = genFeature_t_5_2(14, lm_beta_1);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-    }
-    
-    if(beta_st + 2 < V){
-        int lm_beta_2 = nSet[beta_st+2].get_lemma();
-        int ps_beta_2 = nSet[beta_st+2].get_POS();
         // unigram feature 15
-        f = genFeature_t_5_2(15, lm_beta_2);
+        f = genFeature_t_5_2(15, ps_beta_1);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
         // unigram feature 16
-        f = genFeature_t_5_2(16, ps_beta_2);
+        f = genFeature_t_5_2(16, lm_beta_1, ps_beta_1);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        // unigram feature 17
-        f = genFeature_t_5_2(17, lm_beta_2, ps_beta_2);
+        
+        // bi-gram features
+        f = genBigramFeature(100, lm_beta, lm_beta_1);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
+        f = genFeature_t_5_2(101, lm_beta, ps_beta_1);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        f = genFeature_t_5_2(102, lm_beta_1, ps_beta);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        f = genFeature_t_5_2(103, ps_beta, ps_beta_1);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        f = genBigramFeature(104, lm_beta, lm_beta_1, ps_beta, ps_beta_1);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        
+        if(beta_st + 2 < V){
+            int wd_beta_2 = nSet[beta_st+2].get_form();
+            int lm_beta_2 = nSet[beta_st+2].get_lemma();
+            int ps_beta_2 = nSet[beta_st+2].get_POS();
+            // unigram feature 17
+            f = genFeature_t_5_2(17, wd_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            // unigram feature 18
+            f = genFeature_t_5_2(18, lm_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            // unigram feature 19
+            f = genFeature_t_5_2(19, ps_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            // unigram feature 20
+            f = genFeature_t_5_2(20, lm_beta_2, ps_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            
+            // bi-gram features
+            f = genBigramFeature(110, lm_beta_1, lm_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(111, lm_beta_1, ps_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(112, lm_beta_2, ps_beta_1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(113, ps_beta_1, ps_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genBigramFeature(114, lm_beta_1, lm_beta_2, ps_beta_1, ps_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            
+            f = genBigramFeature(120, lm_beta, lm_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(121, lm_beta, ps_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(122, lm_beta_2, ps_beta);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(123, ps_beta, ps_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genBigramFeature(124, lm_beta, lm_beta_2, ps_beta, ps_beta_2);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+        }
     }
     
+    
+    
     if(beta_st + 3 < V){
+        int wd_beta_3 = nSet[beta_st+3].get_form();
         int lm_beta_3 = nSet[beta_st+3].get_lemma();
         int ps_beta_3 = nSet[beta_st+3].get_POS();
-        // unigram feature 18
-        f = genFeature_t_5_2(18, lm_beta_3);
+        // unigram feature 21
+        f = genFeature_t_5_2(21, wd_beta_3);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        // unigram feature 19
-        f = genFeature_t_5_2(19, ps_beta_3);
+        // unigram feature 22
+        f = genFeature_t_5_2(22, lm_beta_3);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        // unigram feature 20
-        f = genFeature_t_5_2(20, lm_beta_3, ps_beta_3);
+        // unigram feature 23
+        f = genFeature_t_5_2(23, ps_beta_3);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        // unigram feature 24
+        f = genFeature_t_5_2(24, lm_beta_3, ps_beta_3);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
     }
@@ -480,22 +558,70 @@ void FeatureExtractor::extractFeatures(vector<NNode>& nSet, int beta_st, int lam
     if(distance > 1){
         int lambda2_st = lambda1_ed + 1;
         int lambda2_ed = beta_st - 1;
-        // unigram feature 21
-        f = genFeature_t_5_2(21, nSet[lambda2_st].get_POS());
+        int lm_lam2_st = nSet[lambda2_st].get_lemma();
+        int lm_lam2_ed = nSet[lambda2_ed].get_lemma();
+        int ps_lam2_st = nSet[lambda2_st].get_POS();
+        int ps_lam2_ed = nSet[lambda2_ed].get_POS();
+        // unigram feature 25
+        f = genFeature_t_5_2(25, lm_lam2_st);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        // unigram feature 22
-        f = genFeature_t_5_2(22, nSet[lambda2_st].get_lemma(), nSet[lambda2_st].get_POS());
+        // unigram feature 26
+        f = genFeature_t_5_2(26, ps_lam2_st);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        // unigram feature 23
-        f = genFeature_t_5_2(23, nSet[lambda2_ed].get_POS());
+        // unigram feature 27
+        f = genFeature_t_5_2(27, lm_lam2_st, ps_lam2_st);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
-        // unigram feature 24
-        f = genFeature_t_5_2(24, nSet[lambda2_ed].get_lemma(), nSet[lambda2_ed].get_POS());
+        // unigram feature 28
+        f = genFeature_t_5_2(28, lm_lam2_ed);
         fid = proc_feat(f, add_new);
         features.push_back(fid);
+        // unigram feature 29
+        f = genFeature_t_5_2(29, ps_lam2_ed);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        // unigram feature 30
+        f = genFeature_t_5_2(30, lm_lam2_ed, ps_lam2_ed);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        
+        // bi-gram features
+        f = genBigramFeature(130, lm_lam2_ed, lm_beta);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        f = genFeature_t_5_2(131, lm_lam2_ed, ps_beta);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        f = genFeature_t_5_2(132, lm_beta, ps_lam2_ed);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        f = genFeature_t_5_2(133, ps_lam2_ed, ps_beta);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        f = genBigramFeature(134, lm_lam2_ed, lm_beta, ps_lam2_ed, ps_beta);
+        fid = proc_feat(f, add_new);
+        features.push_back(fid);
+        if(lambda1_ed > -1){
+            int lm_lam1 = nSet[lambda1_ed].get_lemma();
+            int ps_lam1 = nSet[lambda1_ed].get_POS();
+            f = genBigramFeature(140, lm_lam1, lm_lam2_st);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(141, lm_lam1, ps_lam2_st);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(142, lm_lam2_st, ps_lam1);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genFeature_t_5_2(143, ps_lam1, ps_lam2_st);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+            f = genBigramFeature(144, lm_lam1, lm_lam2_st, ps_lam1, ps_lam2_st);
+            fid = proc_feat(f, add_new);
+            features.push_back(fid);
+        }
     }
 }
 
